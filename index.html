@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary App</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+
+        .app-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        #word-input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        #search-btn {
+            padding: 10px 20px;
+            background: #00c6ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        #search-btn:hover {
+            background: #007acc;
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        #result p {
+            margin: 8px 0;
+            font-size: 18px;
+        }
+
+        #result .error {
+            color: #ff6b6b;
+        }
+
+        #result .meaning {
+            margin-bottom: 15px;
+        }
+
+        #result .synonyms {
+            font-style: italic;
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>Dictionary App</h1>
+        <input type="text" id="word-input" placeholder="Enter a word...">
+        <button id="search-btn">Search</button>
+        <div id="result">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const word = document.getElementById('word-input').value.trim();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            if (!word) {
+                resultDiv.innerHTML = '<p class="error">Please enter a word to search.</p>';
+                return;
+            }
+
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Word not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const meanings = data[0].meanings;
+                    const synonyms = data[0].meanings.flatMap(meaning => meaning.definitions.flatMap(def => def.synonyms || []));
+
+                    meanings.forEach(meaning => {
+                        const definition = meaning.definitions[0].definition;
+                        const meaningElement = document.createElement('p');
+                        meaningElement.className = 'meaning';
+                        meaningElement.textContent = `Definition: ${definition}`;
+                        resultDiv.appendChild(meaningElement);
+                    });
+
+                    if (synonyms.length > 0) {
+                        const synonymsElement = document.createElement('p');
+                        synonymsElement.className = 'synonyms';
+                        synonymsElement.textContent = `Synonyms: ${synonyms.join(', ')}`;
+                        resultDiv.appendChild(synonymsElement);
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<p class="error">${error.message}</p>`;
+                });
+        });
+    </script>
+</body>
+</html>
